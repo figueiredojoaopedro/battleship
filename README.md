@@ -1,46 +1,106 @@
-# Getting Started with Create React App
+📄 ADR 001 – Use React and TypeScript for Frontend Development
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Status: Accepted
+Date: 2025-05-13
+Context:
+We are developing a browser-based Batalha Naval (Battleship) game. The frontend must support a dynamic UI with interactive components, such as game boards, cells, and drag-and-drop ship placement. We also want strong typing and developer tooling to avoid runtime errors during gameplay.
 
-## Available Scripts
+Decision:
+We chose to use React with TypeScript for the following reasons:
+• React offers a component-based structure which fits well for building the board, cells, and controls as reusable units.
+• TypeScript enhances code reliability with static typing, catching errors at compile-time.
+• The React ecosystem (e.g., hooks, dev tools, libraries) will help with state management, interactivity, and future scalability.
+• We will use create-react-app with the TypeScript template to scaffold the project quickly.
 
-In the project directory, you can run:
+Consequences:
+• Developers must have familiarity with both React and TypeScript.
+• We need to define and maintain custom types for game-related entities (e.g., ships, cells).
+• We will benefit from improved maintainability, type safety, and editor support (autocomplete, type checking).
+• Future architecture decisions (e.g., multiplayer support, state management with Redux or Zustand) will need to align with this tech stack.
 
-### `npm start`
+batalha-naval/
+├── public/
+│ └── index.html
+├── src/
+│ ├── assets/ # Images, icons, sounds, etc.
+│ ├── components/ # Reusable UI components
+│ │ ├── Board/
+│ │ │ ├── Board.tsx
+│ │ │ └── Board.css
+│ │ ├── Cell/
+│ │ │ ├── Cell.tsx
+│ │ │ └── Cell.css
+│ │ └── Ship.tsx
+│ ├── game/ # Game logic and utilities
+│ │ ├── gameLogic.ts
+│ │ └── types.ts
+│ ├── hooks/ # Custom React hooks
+│ ├── App.tsx # Root component
+│ ├── App.css
+│ ├── index.tsx # Entry point
+│ └── styles/ # Global styles
+│ └── globals.css
+├── .gitignore
+├── package.json
+├── README.md
+└── tsconfig.json (if using TypeScript)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+1. ✅ Design the board layout (10x10 grid using Tailwind and components)
+2. ✅ Create reusable <Cell /> and <Board /> components
+3. ✅ Add game logic (turns, ship placement, hits/misses)
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+# React + TypeScript + Vite
 
-### `npm test`
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Currently, two official plugins are available:
 
-### `npm run build`
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Expanding the ESLint configuration
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ["./tsconfig.node.json", "./tsconfig.app.json"],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+});
+```
 
-### `npm run eject`
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```js
+// eslint.config.js
+import reactX from "eslint-plugin-react-x";
+import reactDom from "eslint-plugin-react-dom";
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    "react-x": reactX,
+    "react-dom": reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs["recommended-typescript"].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+});
+```
+# battleship
