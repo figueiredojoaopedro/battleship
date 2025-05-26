@@ -6,6 +6,7 @@ type Ship = {
   name: string;
   size: number;
   positions: ShipPosition[];
+  placed: boolean;
 };
 type Player = { ready: boolean; ships: Ship[]; grid: Grid };
 type Players = { player1: Player; player2: Player };
@@ -23,26 +24,31 @@ const Game = () => {
           name: "Porta Aviões",
           size: 4,
           positions: Array(4).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
         {
           name: "Submarino",
           size: 3,
           positions: Array(3).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
         {
           name: "Destróier",
           size: 2,
           positions: Array(2).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
         {
-          name: "Destróier",
+          name: "Corveta",
           size: 2,
           positions: Array(2).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
         {
           name: "Fragata",
           size: 1,
           positions: Array(1).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
       ],
       grid: Array.from({ length: 10 }, () => Array(10).fill(null)), // se a pos for null, igual a vazio, se false, preenchida, mas não atingida, se true, atingida
@@ -54,26 +60,31 @@ const Game = () => {
           name: "Porta Aviões",
           size: 4,
           positions: Array(4).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
         {
           name: "Submarino",
           size: 3,
           positions: Array(3).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
         {
           name: "Destróier",
           size: 2,
           positions: Array(2).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
         {
-          name: "Destróier",
+          name: "Corveta",
           size: 2,
           positions: Array(2).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
         {
           name: "Fragata",
           size: 1,
           positions: Array(1).fill({ row: null, col: null, hit: false }),
+          placed: false,
         },
       ],
       grid: Array.from({ length: 10 }, () => Array(10).fill(null)),
@@ -101,9 +112,6 @@ const Game = () => {
   ): void => {
     event.dataTransfer.setData("shipName", ship.name);
     event.dataTransfer.setData("shipSize", ship.size.toString());
-
-    console.log("test ship", event.dataTransfer.getData("shipName"));
-    console.log("test shipSize", event.dataTransfer.getData("shipSize"));
   };
 
   const handleShipDrop = (
@@ -113,9 +121,9 @@ const Game = () => {
   ): void => {
     setErrorMessage("");
     const shipSize = parseInt(event.dataTransfer.getData("shipSize"));
+    const shipName = event.dataTransfer.getData("shipName");
 
     const isHorizontal: boolean = direcao === "horizontal";
-    console.log("test", [...players[turn].grid.map((row) => [...row])]);
     let playerGridCopy = [...players[turn].grid.map((row) => [...row])];
 
     for (let i = 0; i < shipSize; i++) {
@@ -137,10 +145,33 @@ const Game = () => {
       playerGridCopy[row][col] = false;
     }
 
+    const ships = players[turn].ships.map((ship) => {
+      if (ship.name === shipName) {
+        ship.placed = true;
+      }
+      return ship;
+    });
+
+    const isSomeoneNotPlaced = ships.some((ship) => !ship.placed);
+
+    if (!isSomeoneNotPlaced) {
+      const newTurn = turn === "player1" ? "player2" : "player1";
+      setTurn(newTurn);
+
+      if (
+        newTurn === "player1" &&
+        players["player1"].ships.every((s) => s.placed) &&
+        players["player2"].ships.every((s) => s.placed)
+      ) {
+        setIsGameStarted(true);
+      }
+    }
+
     setPlayers({
       ...players,
       [turn]: {
         ...players[turn],
+        ships,
         grid: playerGridCopy,
       },
     });
@@ -156,12 +187,62 @@ const Game = () => {
     }
   };
 
+  const handleAttack = (row: number, col: number) => {
+    if (!isGameStarted) {
+      console.error("Game is not started yet");
+      return;
+    }
+
+    const opponent = turn === "player1" ? "player2" : "player1";
+    // creating new arrays out of the states to not affect their pointers in memory
+    const opponentGrid = [...players[opponent].grid.map((r) => [...r])];
+    const opponentShips = [...players[opponent].ships];
+
+    if (opponentGrid[row][col] === true) {
+      setErrorMessage("Você já atacou aqui.");
+      return;
+    }
+
+    let hit = false;
+
+    for (let ship of opponentShips) {
+      for (let pos of ship.positions) {
+        if (pos.row === row && pos.col === col) {
+          pos.hit = true;
+          hit = true;
+        }
+      }
+    }
+
+    opponentGrid[row][col] = hit ? true : false;
+
+    // checking if everyone is sunk
+    const allSunk = opponentShips.every((ship) =>
+      ship.positions.every((pos) => pos.hit)
+    );
+
+    if (allSunk) {
+      alert(`${turn.toUpperCase()} venceu o jogo!`);
+    } else {
+      setTurn(opponent);
+    }
+
+    setPlayers({
+      ...players,
+      [opponent]: {
+        ...players[opponent],
+        grid: opponentGrid,
+        ships: opponentShips,
+      },
+    });
+  };
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4">
       <div className="flex flex-col items-center mb-2">
         <h2 className="text-4xl font-bold mb-8">Campo de batalha</h2>
         <p className="text-xl font-bold">
-          {turn} está escolhendo as posições...
+          {turn}{" "}
+          {isGameStarted ? "está atacando" : "está escolhendo as posições..."}
         </p>
         {errorMessage && (
           <p className="text-red-500 font-bold">{errorMessage}</p>
@@ -169,51 +250,84 @@ const Game = () => {
       </div>
       <div className="flex flex-row items-center justify-center">
         <div className="grid grid-cols-10 border-1">
-          {players[turn].grid.map((row, rowIndex) =>
-            row.map((cell, colIndex) => (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={(event) => handleShipDrop(event, rowIndex, colIndex)}
-                className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
-              />
-            ))
-          )}
+          {!isGameStarted &&
+            players[turn].grid.map((row, rowIndex) =>
+              row.map((cell, colIndex) => (
+                <>
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) =>
+                      handleShipDrop(event, rowIndex, colIndex)
+                    }
+                    style={{
+                      backgroundColor:
+                        cell !== null ? "gray" : cell === true ? "red" : "",
+                    }}
+                    className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
+                  />
+                </>
+              ))
+            )}
+          {isGameStarted &&
+            players[turn === "player1" ? "player2" : "player1"].grid.map(
+              (row, rowIndex) =>
+                row.map((cell, colIndex) => (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    onClick={() => handleAttack(rowIndex, colIndex)}
+                    style={{
+                      backgroundColor:
+                        cell !== null ? "gray" : cell === true ? "red" : "",
+                    }}
+                    className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
+                  />
+                ))
+            )}
         </div>
         <div className="flex flex-col gap-3 ml-8">
-          <div>
-            <button
-              onClick={handleRotacionar}
-              className="transition duration-150 ease-in-out hover:bg-gray-200 bg-white rounded-sm p-4 text-black cursor-pointer"
-            >
-              Rotacionar
-            </button>
-          </div>
+          {!isGameStarted && (
+            <div>
+              <button
+                onClick={handleRotacionar}
+                className="transition duration-150 ease-in-out hover:bg-gray-200 bg-white rounded-sm p-4 text-black cursor-pointer"
+              >
+                Rotacionar
+              </button>
+            </div>
+          )}
           <div>
             <div>
-              {players[turn].ships.map((ship, index) => {
-                const isHorizontal = direcao === "horizontal";
-                return (
-                  <div key={index}>
-                    <h4>{ship.name}</h4>
-                    <div className="flex">
-                      <div
-                        draggable
-                        onDragStart={(event) => onDragStart(event, ship)}
-                        style={{
-                          width: isHorizontal
-                            ? getShipWidth(ship.size)
-                            : "40px",
-                          height: isHorizontal ? "40px" : `${ship.size * 40}px`,
-                          display: "flex",
-                          flexDirection: "row",
-                        }}
-                        className={`border-1 border-white rounded-sm cursor-grab bg-red-500`}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
+              {!isGameStarted &&
+                players?.[turn]?.ships?.map((ship, index) => {
+                  const isHorizontal = direcao === "horizontal";
+                  return (
+                    <>
+                      {!ship.placed && (
+                        <div key={index}>
+                          <h4>{ship.name}</h4>
+                          <div className="flex">
+                            <div
+                              draggable
+                              onDragStart={(event) => onDragStart(event, ship)}
+                              style={{
+                                width: isHorizontal
+                                  ? getShipWidth(ship.size)
+                                  : "40px",
+                                height: isHorizontal
+                                  ? "40px"
+                                  : `${ship.size * 40}px`,
+                                display: "flex",
+                                flexDirection: "row",
+                              }}
+                              className={`border-1 border-white rounded-sm cursor-grab bg-red-500`}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })}
             </div>
           </div>
         </div>
