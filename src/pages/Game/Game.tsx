@@ -1,14 +1,14 @@
 import { useState } from "react";
 
 type ShipPosition = { row: number | null; col: number | null; hit: boolean };
-type Grid = (null | boolean)[][];
+type Grid = (null | boolean | String)[][];
 type Ship = {
   name: string;
   size: number;
   positions: ShipPosition[];
   placed: boolean;
 };
-type Player = { ready: boolean; ships: Ship[]; grid: Grid };
+type Player = { ships: Ship[]; grid: Grid };
 type Players = { player1: Player; player2: Player };
 type Turn = "player1" | "player2";
 
@@ -18,72 +18,90 @@ const Game = () => {
 
   const [players, setPlayers] = useState<Players>({
     player1: {
-      ready: false,
       ships: [
         {
           name: "Porta Aviões",
           size: 4,
-          positions: Array(4).fill({ row: null, col: null, hit: false }),
+          positions: Array(4)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
         {
           name: "Submarino",
           size: 3,
-          positions: Array(3).fill({ row: null, col: null, hit: false }),
+          positions: Array(3)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
         {
           name: "Destróier",
           size: 2,
-          positions: Array(2).fill({ row: null, col: null, hit: false }),
+          positions: Array(2)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
         {
           name: "Corveta",
           size: 2,
-          positions: Array(2).fill({ row: null, col: null, hit: false }),
+          positions: Array(2)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
         {
           name: "Fragata",
           size: 1,
-          positions: Array(1).fill({ row: null, col: null, hit: false }),
+          positions: Array(1)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
       ],
       grid: Array.from({ length: 10 }, () => Array(10).fill(null)), // se a pos for null, igual a vazio, se false, preenchida, mas não atingida, se true, atingida
     },
     player2: {
-      ready: false,
       ships: [
         {
           name: "Porta Aviões",
           size: 4,
-          positions: Array(4).fill({ row: null, col: null, hit: false }),
+          positions: Array(4)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
         {
           name: "Submarino",
           size: 3,
-          positions: Array(3).fill({ row: null, col: null, hit: false }),
+          positions: Array(3)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
         {
           name: "Destróier",
           size: 2,
-          positions: Array(2).fill({ row: null, col: null, hit: false }),
+          positions: Array(2)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
         {
           name: "Corveta",
           size: 2,
-          positions: Array(2).fill({ row: null, col: null, hit: false }),
+          positions: Array(2)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
         {
           name: "Fragata",
           size: 1,
-          positions: Array(1).fill({ row: null, col: null, hit: false }),
+          positions: Array(1)
+            .fill(null)
+            .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
       ],
@@ -126,20 +144,29 @@ const Game = () => {
     const isHorizontal: boolean = direcao === "horizontal";
     let playerGridCopy = [...players[turn].grid.map((row) => [...row])];
 
+    const currentShip = players[turn].ships.find(
+      (ship) => ship.name === shipName
+    );
+
     for (let i = 0; i < shipSize; i++) {
       const row = isHorizontal ? targetRow : targetRow + i;
       const col = isHorizontal ? targetCol + i : targetCol;
 
       if (row >= 10 || col >= 10) {
-        console.log("Posição inválida! Está fora do tabuleiro.");
+        console.error("Posição inválida! Está fora do tabuleiro.");
         setErrorMessage("Posição inválida! Está fora do tabuleiro.");
         return;
       }
 
       if (playerGridCopy[row][col] !== null) {
-        console.log("Posição inválida! Este espaço já está ocupado.");
+        console.error("Posição inválida! Este espaço já está ocupado.");
         setErrorMessage("Posição inválida! Este espaço já está ocupado.");
         return;
+      }
+
+      if (currentShip?.positions?.[i]) {
+        currentShip.positions[i].row = row;
+        currentShip.positions[i].col = col;
       }
 
       playerGridCopy[row][col] = false;
@@ -194,6 +221,7 @@ const Game = () => {
     }
 
     const opponent = turn === "player1" ? "player2" : "player1";
+
     // creating new arrays out of the states to not affect their pointers in memory
     const opponentGrid = [...players[opponent].grid.map((r) => [...r])];
     const opponentShips = [...players[opponent].ships];
@@ -214,8 +242,7 @@ const Game = () => {
       }
     }
 
-    opponentGrid[row][col] = hit ? true : false;
-
+    opponentGrid[row][col] = hit ? true : "empty";
     // checking if everyone is sunk
     const allSunk = opponentShips.every((ship) =>
       ship.positions.every((pos) => pos.hit)
@@ -223,6 +250,7 @@ const Game = () => {
 
     if (allSunk) {
       alert(`${turn.toUpperCase()} venceu o jogo!`);
+      restartGame();
     } else {
       setTurn(opponent);
     }
@@ -236,6 +264,11 @@ const Game = () => {
       },
     });
   };
+
+  const restartGame = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4">
       <div className="flex flex-col items-center mb-2">
@@ -253,36 +286,38 @@ const Game = () => {
           {!isGameStarted &&
             players[turn].grid.map((row, rowIndex) =>
               row.map((cell, colIndex) => (
-                <>
-                  <div
-                    key={`${rowIndex}-${colIndex}`}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) =>
-                      handleShipDrop(event, rowIndex, colIndex)
-                    }
-                    style={{
-                      backgroundColor:
-                        cell !== null ? "gray" : cell === true ? "red" : "",
-                    }}
-                    className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
-                  />
-                </>
+                <div
+                  key={`${rowIndex}-${colIndex}`}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => handleShipDrop(event, rowIndex, colIndex)}
+                  style={{
+                    backgroundColor:
+                      cell === false ? "gray" : cell === true ? "red" : "",
+                  }}
+                  className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
+                />
               ))
             )}
           {isGameStarted &&
             players[turn === "player1" ? "player2" : "player1"].grid.map(
               (row, rowIndex) =>
-                row.map((cell, colIndex) => (
-                  <div
-                    key={`${rowIndex}-${colIndex}`}
-                    onClick={() => handleAttack(rowIndex, colIndex)}
-                    style={{
-                      backgroundColor:
-                        cell !== null ? "gray" : cell === true ? "red" : "",
-                    }}
-                    className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
-                  />
-                ))
+                row.map((cell, colIndex) => {
+                  return (
+                    <div
+                      key={`${rowIndex}-${colIndex}`}
+                      onClick={() => handleAttack(rowIndex, colIndex)}
+                      style={{
+                        backgroundColor:
+                          cell === true
+                            ? "red"
+                            : cell === "empty"
+                            ? "black"
+                            : undefined,
+                      }}
+                      className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
+                    />
+                  );
+                })
             )}
         </div>
         <div className="flex flex-col gap-3 ml-8">
@@ -302,7 +337,7 @@ const Game = () => {
                 players?.[turn]?.ships?.map((ship, index) => {
                   const isHorizontal = direcao === "horizontal";
                   return (
-                    <>
+                    <span key={index + "spanShips"}>
                       {!ship.placed && (
                         <div key={index}>
                           <h4>{ship.name}</h4>
@@ -320,12 +355,12 @@ const Game = () => {
                                 display: "flex",
                                 flexDirection: "row",
                               }}
-                              className={`border-1 border-white rounded-sm cursor-grab bg-red-500`}
+                              className={`border-1 border-white rounded-sm cursor-grab bg-gray-500`}
                             ></div>
                           </div>
                         </div>
                       )}
-                    </>
+                    </span>
                   );
                 })}
             </div>
