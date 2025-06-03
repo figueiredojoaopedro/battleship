@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 type ShipPosition = { row: number | null; col: number | null; hit: boolean };
 type Grid = (null | boolean | String)[][];
@@ -281,44 +281,78 @@ const Game = () => {
           <p className="text-red-500 font-bold">{errorMessage}</p>
         )}
       </div>
-      <div className="flex flex-row items-center justify-center">
-        <div className="grid grid-cols-10 border-1">
-          {!isGameStarted &&
-            players[turn].grid.map((row, rowIndex) =>
-              row.map((cell, colIndex) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={(event) => handleShipDrop(event, rowIndex, colIndex)}
-                  style={{
-                    backgroundColor:
-                      cell === false ? "gray" : cell === true ? "red" : "",
-                  }}
-                  className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
-                />
-              ))
-            )}
-          {isGameStarted &&
-            players[turn === "player1" ? "player2" : "player1"].grid.map(
-              (row, rowIndex) =>
-                row.map((cell, colIndex) => {
-                  return (
-                    <div
-                      key={`${rowIndex}-${colIndex}`}
-                      onClick={() => handleAttack(rowIndex, colIndex)}
-                      style={{
-                        backgroundColor:
-                          cell === true
-                            ? "red"
-                            : cell === "empty"
-                            ? "black"
-                            : undefined,
-                      }}
-                      className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
-                    />
-                  );
-                })
-            )}
+      <div className="flex flex-row justify-center items-center">
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: "40px repeat(10, 56px)",
+            gridAutoRows: "56px",
+          }}
+        >
+          {/* Top-left corner */}
+          <div></div>
+          {/* Column headers */}
+          {"ABCDEFGHIJ".split("").map((letter, i) => (
+            <div
+              key={`col-${i}`}
+              className="flex items-center justify-center font-bold"
+            >
+              {letter}
+            </div>
+          ))}
+
+          {/* Grid rows */}
+          {players[turn].grid.map((row, rowIndex) => (
+            <React.Fragment key={`row-${rowIndex}`}>
+              {/* Row header */}
+              <div className="flex items-center justify-center font-bold">
+                {rowIndex + 1}
+              </div>
+              {row.map((cell, colIndex) => {
+                const isCellDisabled = isGameStarted && turn === "player1";
+                const cellContent = isGameStarted
+                  ? players[turn === "player1" ? "player2" : "player1"].grid[
+                      rowIndex
+                    ][colIndex]
+                  : players[turn].grid[rowIndex][colIndex];
+
+                const backgroundColor = !isGameStarted
+                  ? cellContent === false
+                    ? "gray"
+                    : ""
+                  : cellContent === true
+                  ? "red"
+                  : cellContent === "empty"
+                  ? "black"
+                  : "";
+
+                return (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    onClick={
+                      isGameStarted
+                        ? () => handleAttack(rowIndex, colIndex)
+                        : undefined
+                    }
+                    onDrop={
+                      !isGameStarted
+                        ? (event) => handleShipDrop(event, rowIndex, colIndex)
+                        : undefined
+                    }
+                    onDragOver={
+                      !isGameStarted
+                        ? (event) => event.preventDefault()
+                        : undefined
+                    }
+                    style={{ backgroundColor }}
+                    className="w-14 h-14 bg-blue-500 border border-white hover:bg-blue-400 cursor-pointer"
+                  >
+                    <svg></svg>
+                  </div>
+                );
+              })}
+            </React.Fragment>
+          ))}
         </div>
         <div className="flex flex-col gap-3 ml-8">
           {!isGameStarted && (
