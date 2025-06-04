@@ -1,5 +1,11 @@
 import React, { useState } from "react";
+import frigate from "../../assets/frigate.svg";
+import destroyer from "../../assets/destroyer.svg";
+import aircraftcarrier from "../../assets/aircraftcarrier.svg";
+import submarine from "../../assets/submarine.svg";
+import corvette from "../../assets/corvette.svg";
 
+// Tipos para as posições dos navios, grid, navio, jogador e jogadores
 type ShipPosition = { row: number | null; col: number | null; hit: boolean };
 type Grid = (null | boolean | String)[][];
 type Ship = {
@@ -13,12 +19,15 @@ type Players = { player1: Player; player2: Player };
 type Turn = "player1" | "player2";
 
 const Game = () => {
+  // Estado para direção do navio (horizontal/vertical) e mensagens de erro
   const [direcao, setDirecao] = useState<String>("horizontal");
   const [errorMessage, setErrorMessage] = useState<String>("");
 
+  // Estado dos jogadores, navios e grids
   const [players, setPlayers] = useState<Players>({
     player1: {
       ships: [
+        // Lista de navios do player1
         {
           name: "Porta Aviões",
           size: 4,
@@ -27,6 +36,7 @@ const Game = () => {
             .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
+        // ...outros navios...
         {
           name: "Submarino",
           size: 3,
@@ -60,10 +70,11 @@ const Game = () => {
           placed: false,
         },
       ],
-      grid: Array.from({ length: 10 }, () => Array(10).fill(null)), // se a pos for null, igual a vazio, se false, preenchida, mas não atingida, se true, atingida
+      grid: Array.from({ length: 10 }, () => Array(10).fill(null)), // Grid 10x10
     },
     player2: {
       ships: [
+        // Lista de navios do player2 (igual ao player1)
         {
           name: "Porta Aviões",
           size: 4,
@@ -72,6 +83,7 @@ const Game = () => {
             .map(() => ({ row: null, col: null, hit: false })),
           placed: false,
         },
+        // ...outros navios...
         {
           name: "Submarino",
           size: 3,
@@ -109,9 +121,11 @@ const Game = () => {
     },
   });
 
+  // Estado para saber se o jogo começou e de quem é a vez
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [turn, setTurn] = useState<Turn>("player1");
 
+  // Função para calcular largura do navio para exibição
   const getShipWidth = (size: number): string => {
     const widthMap: { [key: number]: number } = {
       1: 10,
@@ -124,6 +138,7 @@ const Game = () => {
     return (widthMap[size] * 5).toString() + "px" || (14 * 2).toString() + "px";
   };
 
+  // Função chamada ao começar a arrastar um navio
   const onDragStart = (
     event: React.DragEvent<HTMLDivElement>,
     ship: Ship
@@ -132,6 +147,7 @@ const Game = () => {
     event.dataTransfer.setData("shipSize", ship.size.toString());
   };
 
+  // Função chamada ao soltar um navio no grid
   const handleShipDrop = (
     event: React.DragEvent<HTMLDivElement>,
     targetRow: number,
@@ -148,6 +164,7 @@ const Game = () => {
       (ship) => ship.name === shipName
     );
 
+    // Verifica se a posição é válida e não está ocupada
     for (let i = 0; i < shipSize; i++) {
       const row = isHorizontal ? targetRow : targetRow + i;
       const col = isHorizontal ? targetCol + i : targetCol;
@@ -172,6 +189,7 @@ const Game = () => {
       playerGridCopy[row][col] = false;
     }
 
+    // Marca o navio como colocado
     const ships = players[turn].ships.map((ship) => {
       if (ship.name === shipName) {
         ship.placed = true;
@@ -179,12 +197,14 @@ const Game = () => {
       return ship;
     });
 
+    // Se todos os navios foram colocados, troca o turno
     const isSomeoneNotPlaced = ships.some((ship) => !ship.placed);
 
     if (!isSomeoneNotPlaced) {
       const newTurn = turn === "player1" ? "player2" : "player1";
       setTurn(newTurn);
 
+      // Se ambos já colocaram, inicia o jogo
       if (
         newTurn === "player1" &&
         players["player1"].ships.every((s) => s.placed) &&
@@ -194,6 +214,7 @@ const Game = () => {
       }
     }
 
+    // Atualiza o estado dos jogadores
     setPlayers({
       ...players,
       [turn]: {
@@ -204,6 +225,7 @@ const Game = () => {
     });
   };
 
+  // Alterna a direção do navio
   const handleRotacionar = () => {
     if (direcao === "horizontal") {
       setDirecao("vertical");
@@ -214,6 +236,7 @@ const Game = () => {
     }
   };
 
+  // Função para atacar uma célula do oponente
   const handleAttack = (row: number, col: number) => {
     if (!isGameStarted) {
       console.error("Game is not started yet");
@@ -222,10 +245,11 @@ const Game = () => {
 
     const opponent = turn === "player1" ? "player2" : "player1";
 
-    // creating new arrays out of the states to not affect their pointers in memory
+    // Cria cópias dos arrays para não alterar diretamente o estado
     const opponentGrid = [...players[opponent].grid.map((r) => [...r])];
     const opponentShips = [...players[opponent].ships];
 
+    // Verifica se já atacou essa célula
     if (opponentGrid[row][col] === true) {
       setErrorMessage("Você já atacou aqui.");
       return;
@@ -233,6 +257,7 @@ const Game = () => {
 
     let hit = false;
 
+    // Marca como atingido se acertou um navio
     for (let ship of opponentShips) {
       for (let pos of ship.positions) {
         if (pos.row === row && pos.col === col) {
@@ -243,7 +268,7 @@ const Game = () => {
     }
 
     opponentGrid[row][col] = hit ? true : "empty";
-    // checking if everyone is sunk
+    // Verifica se todos os navios foram afundados
     const allSunk = opponentShips.every((ship) =>
       ship.positions.every((pos) => pos.hit)
     );
@@ -255,6 +280,7 @@ const Game = () => {
       setTurn(opponent);
     }
 
+    // Atualiza o estado dos jogadores
     setPlayers({
       ...players,
       [opponent]: {
@@ -265,10 +291,12 @@ const Game = () => {
     });
   };
 
+  // Reinicia o jogo recarregando a página
   const restartGame = () => {
     window.location.reload();
   };
 
+  // Renderização do componente
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white p-4">
       <div className="flex flex-col items-center mb-2">
@@ -289,9 +317,8 @@ const Game = () => {
             gridAutoRows: "56px",
           }}
         >
-          {/* Top-left corner */}
+          {/* Cabeçalho das colunas */}
           <div></div>
-          {/* Column headers */}
           {"ABCDEFGHIJ".split("").map((letter, i) => (
             <div
               key={`col-${i}`}
@@ -301,21 +328,24 @@ const Game = () => {
             </div>
           ))}
 
-          {/* Grid rows */}
+          {/* Renderiza as linhas do grid */}
           {players[turn].grid.map((row, rowIndex) => (
             <React.Fragment key={`row-${rowIndex}`}>
-              {/* Row header */}
+              {/* Cabeçalho da linha */}
               <div className="flex items-center justify-center font-bold">
                 {rowIndex + 1}
               </div>
               {row.map((cell, colIndex) => {
+                // Desabilita célula se o jogo começou e é a vez do player1
                 const isCellDisabled = isGameStarted && turn === "player1";
+                // Mostra o conteúdo correto da célula dependendo do estado do jogo
                 const cellContent = isGameStarted
                   ? players[turn === "player1" ? "player2" : "player1"].grid[
                       rowIndex
                     ][colIndex]
                   : players[turn].grid[rowIndex][colIndex];
 
+                // Define cor de fundo da célula
                 const backgroundColor = !isGameStarted
                   ? cellContent === false
                     ? "gray"
@@ -355,6 +385,7 @@ const Game = () => {
           ))}
         </div>
         <div className="flex flex-col gap-3 ml-8">
+          {/* Botão de rotacionar navio */}
           {!isGameStarted && (
             <div>
               <button
@@ -367,6 +398,7 @@ const Game = () => {
           )}
           <div>
             <div>
+              {/* Lista de navios para arrastar */}
               {!isGameStarted &&
                 players?.[turn]?.ships?.map((ship, index) => {
                   const isHorizontal = direcao === "horizontal";
@@ -389,8 +421,80 @@ const Game = () => {
                                 display: "flex",
                                 flexDirection: "row",
                               }}
-                              className={`border-1 border-white rounded-sm cursor-grab bg-gray-500`}
-                            ></div>
+                              className={`border-1 border-white rounded-sm cursor-grab bg-blue-300`}
+                            >
+                              {/* Render SVG based on ship name */}
+                              {ship.name === "Porta Aviões" && (
+                                <img
+                                  className="scale-200"
+                                  src={aircraftcarrier}
+                                  alt="Porta Aviões"
+                                  style={{
+                                    minWidth: "100%",
+                                    minHeight: "100%",
+                                    transform: isHorizontal
+                                      ? ""
+                                      : "rotate(90deg)",
+                                  }}
+                                />
+                              )}
+                              {ship.name === "Submarino" && (
+                                <img
+                                  className="scale-200"
+                                  src={submarine}
+                                  alt="Submarino"
+                                  style={{
+                                    minWidth: "100%",
+                                    minHeight: "100%",
+                                    transform: isHorizontal
+                                      ? ""
+                                      : "rotate(90deg)",
+                                  }}
+                                />
+                              )}
+                              {ship.name === "Destróier" && (
+                                <img
+                                  src={destroyer}
+                                  className="scale-150"
+                                  alt="Destróier"
+                                  style={{
+                                    minWidth: "100%",
+                                    minHeight: "100%",
+                                    transform: isHorizontal
+                                      ? ""
+                                      : "rotate(90deg)",
+                                  }}
+                                />
+                              )}
+                              {ship.name === "Corveta" && (
+                                <img
+                                  src={corvette}
+                                  className="scale-200"
+                                  alt="Corveta"
+                                  style={{
+                                    minWidth: "100%",
+                                    minHeight: "100%",
+                                    transform: isHorizontal
+                                      ? ""
+                                      : "rotate(90deg)",
+                                  }}
+                                />
+                              )}
+                              {ship.name === "Fragata" && (
+                                <img
+                                  src={frigate}
+                                  className="scale-200"
+                                  alt="Fragata"
+                                  style={{
+                                    minWidth: "100%",
+                                    minHeight: "100%",
+                                    transform: isHorizontal
+                                      ? ""
+                                      : "rotate(90deg)",
+                                  }}
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
                       )}

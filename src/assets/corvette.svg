@@ -1,0 +1,19 @@
+<svg width="300" height="150" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- Casco da corveta -->
+  <path d="M40 100 L260 100 L240 85 L60 85 L40 100 Z" fill="#556" />
+
+  <!-- Torre de comando -->
+  <rect x="120" y="65" width="30" height="20" fill="#667" />
+  <rect x="125" y="55" width="20" height="10" fill="#778" />
+  
+  <!-- Mastro com radar -->
+  <rect x="134" y="35" width="2" height="20" fill="#444" />
+  <rect x="128" y="30" width="15" height="5" fill="#888" />
+
+  <!-- Canhão frontal -->
+  <rect x="60" y="80" width="10" height="5" fill="#333" />
+  <line x1="65" y1="80" x2="50" y2="75" stroke="#333" stroke-width="2" />
+
+  <!-- Antena lateral -->
+  <line x1="140" y1="40" x2="155" y2="60" stroke="#444" stroke-width="1" />
+</svg>

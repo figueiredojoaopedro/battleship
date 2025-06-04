@@ -1,0 +1,23 @@
+<svg width="300" height="150" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- Casco da fragata -->
+  <path d="M35 100 L265 100 L245 85 L55 85 L35 100 Z" fill="#445" />
+
+  <!-- Superestrutura -->
+  <rect x="110" y="60" width="40" height="25" fill="#667" />
+  <rect x="120" y="50" width="20" height="10" fill="#778" />
+  
+  <!-- Mastro -->
+  <rect x="134" y="30" width="2" height="20" fill="#444" />
+  <circle cx="135" cy="28" r="3" fill="#666" />
+  <line x1="135" y1="28" x2="120" y2="45" stroke="#444" stroke-width="1" />
+  <line x1="135" y1="28" x2="150" y2="45" stroke="#444" stroke-width="1" />
+
+  <!-- Canhão principal -->
+  <rect x="60" y="78" width="10" height="6" fill="#333" />
+  <line x1="65" y1="78" x2="50" y2="72" stroke="#333" stroke-width="2" />
+
+  <!-- Detalhes da ponte -->
+  <circle cx="125" cy="65" r="3" fill="#88c" />
+  <circle cx="135" cy="65" r="3" fill="#88c" />
+  <circle cx="145" cy="65" r="3" fill="#88c" />
+</svg>
